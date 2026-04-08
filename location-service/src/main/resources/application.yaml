@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: location-service
+server:
+  port: 8085
+
+  redis:
+    host: localhost
+    port: 6379
