@@ -4,7 +4,7 @@
 I developed a microservices-based ride booking platform with real-time capabilities.
 
 System Design:
-
+![RideNow_Design](RideNow_Design.png)
 
 🔧 Key Features:
 • Microservices architecture using Spring Boot
