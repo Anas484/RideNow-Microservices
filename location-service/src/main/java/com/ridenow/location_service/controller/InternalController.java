@@ -1,6 +1,7 @@
 package com.ridenow.location_service.controller;
 
 
+import com.ridenow.location_service.dto.DriverLocation;
 import com.ridenow.location_service.service.GeoCoderService;
 import com.ridenow.location_service.service.LocationService;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +19,9 @@ public class InternalController {
     private final GeoCoderService geoCoderService;
 
     //UpdateDriverLocation
-    @PostMapping("/update-location/{driverId}")
-    public void updateDriverLocation(@PathVariable Long driverId, @RequestParam Double lat, @RequestParam Double lon) {
-        locationService.updateDriverLocation(driverId, lat, lon);
+    @PostMapping("/update-location")
+    public void updateDriverLocation(@RequestBody DriverLocation driverLocation) {
+        locationService.updateDriverLocation(driverLocation);
     }
 
     //GetNearbyDriversWithing5Km

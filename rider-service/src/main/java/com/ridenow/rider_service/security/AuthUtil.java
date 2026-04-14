@@ -41,13 +41,13 @@ public class AuthUtil {
         return claims.get("roles", List.class);
     }
 
-    public Long getDriverIdFromToken(String token) {
+    public String getDriverIdFromToken(String token) {
         Claims claims =  Jwts.parser()
                 .verifyWith(getSecretKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        return claims.get("custID", Long.class);
+        return claims.get("id", String.class);
     }
 
 }

@@ -1,8 +1,11 @@
 package com.ridenow.location_service.service;
 
 
+import com.ridenow.location_service.dto.DriverLocation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.geo.*;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -18,19 +22,22 @@ public class LocationService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final String KEY = "driver:location";
+    private final RabbitTemplate rabbitTemplate;
 
-    public void updateDriverLocation(Long driverId, Double latitude, Double longitude) {
+    @RabbitListener(queues = "driver-location-queue", concurrency = "1000-2000")
+    public void updateDriverLocation(DriverLocation driverLocation) {
+        String driverId = driverLocation.getDriverId().toString();
         stringRedisTemplate.opsForGeo().add(
                 KEY,
-                new Point(longitude,latitude),
-                driverId.toString()
+                new Point((Double) driverLocation.getLon(),(Double) driverLocation.getLat()),
+                driverId
         );
         stringRedisTemplate.opsForValue().set(
-                "driver:ttl:" + driverId.toString(),
+                "driver:ttl:" + driverId,
                 "active",
                 Duration.ofSeconds(60)
         );
-        log.info("Updated location for driver {}: {}", driverId);
+        log.info("Driver location has been updated with " +  driverLocation.getLat() + " " + driverLocation.getLon() + " " + driverId);
     }
 
     //GetNearbyDrivcers

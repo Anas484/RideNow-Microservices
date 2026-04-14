@@ -36,11 +36,13 @@ public class JWTAuthFilter extends OncePerRequestFilter {
         }
         String token = authHeader.split(" ")[1];
         String email = authUtil.getEmailFromToken(token);
+        String driverid = authUtil.getDriverIdFromToken(token);
+        List<String> role = authUtil.getRoleFromToken(token);
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            Driver driver = driverRepo.findDriverByEmail(email).orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-            List<GrantedAuthority> authorities = (List<GrantedAuthority>) driver.getAuthorities();
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(driver, null, authorities);
+//            Driver driver = driverRepo.findDriverByEmail(email).orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+            List<GrantedAuthority> authorities = (List<GrantedAuthority>) role.stream().map(r -> (GrantedAuthority) () -> r).toList();
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email, null ,authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);

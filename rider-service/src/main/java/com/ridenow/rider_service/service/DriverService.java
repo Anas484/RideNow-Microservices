@@ -1,10 +1,7 @@
 package com.ridenow.rider_service.service;
 
 
-import com.ridenow.rider_service.DTO.DriverRequestDTO;
-import com.ridenow.rider_service.DTO.DriverResponseDTO;
-import com.ridenow.rider_service.DTO.LoginProcessDTO;
-import com.ridenow.rider_service.DTO.SignUpProcessDTO;
+import com.ridenow.rider_service.DTO.*;
 import com.ridenow.rider_service.DriverExceptions.DriverAlreadyExistsException;
 import com.ridenow.rider_service.ModelMapper.DriverMapper;
 import com.ridenow.rider_service.model.Driver;
@@ -13,13 +10,17 @@ import com.ridenow.rider_service.repository.DriverRepo;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +31,12 @@ public class DriverService {
 
     public final DriverMapper driverMapper;
 
+    private final RabbitTemplate rabbitTemplate;
+
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    private final Random random = new Random();
+
 
     public LoginProcessDTO getDriverByEmail(@NonNull String email) {
         Driver driver = driverRepo.findDriverByEmail(email)
@@ -73,6 +79,25 @@ public class DriverService {
                 .orElse(null);
         return driverMapper.DriverResponceMapper(driver);
     }
+
+
+    @Scheduled(fixedRate = 5000)
+    public void sendDriverLocationGeneral(){
+        ExecutorService executor = Executors.newFixedThreadPool(1000);
+        for (int i = 1; i <= 1000; i++) {
+            final long driverId = i;
+//            Long id = random.nextLong(1,10);
+            executor.submit(() -> {
+                Double lat = (random.nextDouble() - 0.5) / 1000;
+                Double lon = (random.nextDouble() - 0.5) / 1000;
+                DriverLocation driver = new DriverLocation(driverId, lat, lon);
+                rabbitTemplate.convertAndSend("driver-location-queue", driver);
+            });
+
+        }
+        log.info("Sending 100 driver location");
+    }
+
 
 
 }
