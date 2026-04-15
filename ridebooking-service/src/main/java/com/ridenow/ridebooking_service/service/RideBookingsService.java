@@ -11,6 +11,8 @@ import com.ridenow.ridebooking_service.model.RideBookingStatus;
 import com.ridenow.ridebooking_service.model.RideBookings;
 import com.ridenow.ridebooking_service.repository.RideBookingsRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.annotation.Queue;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +34,7 @@ public class RideBookingsService {
     private final StringRedisTemplate stringRedisTemplate;
 
 
+    @RabbitListener(queues = "ride_booking_requests",concurrency = "5-10")
     public void createRideBooking(RideBookingRequestDTO data) {
         Map<String, Double> pickCords = locationFeign.getGeoCode(data.pickUpLocation());
         Map<String, Double> dropCords = locationFeign.getGeoCode(data.dropOffLocation());
@@ -40,10 +43,9 @@ public class RideBookingsService {
         if (driverIDs.isEmpty()) {
             throw new NoDriverFoundNearbyException("No drivers found nearby");
         }
-
+        Map<Long,String> driverStatusMap = driverFeign.checkAllDriverStatus(driverIDs);
         for (Long driverID : driverIDs) {
-            String status = driverFeign.checkDriverStatus(driverID);
-            if (!"AVAILABLE".equals(status)) continue;
+            if (!driverStatusMap.get(driverID).equals("ONLINE")) continue;
 
             String lockKey = "lock:driver:" + driverID;
             Boolean lockAcquired = stringRedisTemplate.opsForValue()
@@ -53,7 +55,7 @@ public class RideBookingsService {
 
             try {
                 String statusAfterLock = driverFeign.checkDriverStatus(driverID);
-                if (!"AVAILABLE".equals(statusAfterLock)) continue;
+                if (!"ONLINE".equals(statusAfterLock)) continue;
 
 //                Boolean accepted = notificationFeign.sendRideRequestToDriver(driverID, data);
                 Boolean accepted = true;
@@ -79,13 +81,12 @@ public class RideBookingsService {
                 return;
 
             } catch (Exception e) {
-                driverFeign.updateDriverStatus(driverID, "AVAILABLE");
+                driverFeign.updateDriverStatus(driverID, "ONLINE");
                 throw e;
             } finally {
                 stringRedisTemplate.delete(lockKey);
             }
         }
-
         throw new NoDriverAcceptedRequest("No driver accepted the request");
     }
 
