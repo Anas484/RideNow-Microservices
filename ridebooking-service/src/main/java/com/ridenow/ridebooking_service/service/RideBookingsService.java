@@ -34,7 +34,7 @@ public class RideBookingsService {
     private final StringRedisTemplate stringRedisTemplate;
 
 
-    @RabbitListener(queues = "ride_booking_requests",concurrency = "5-10")
+    @RabbitListener(queues = "ride_booking_queue",concurrency = "5-10")
     public void createRideBooking(RideBookingRequestDTO data) {
         Map<String, Double> pickCords = locationFeign.getGeoCode(data.pickUpLocation());
         Map<String, Double> dropCords = locationFeign.getGeoCode(data.dropOffLocation());
