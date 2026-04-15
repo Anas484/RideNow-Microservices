@@ -1,10 +1,12 @@
 package com.ridenow.rider_service.controller;
 
 
-import com.ridenow.rider_service.service.DriverService;
 import com.ridenow.rider_service.service.InternalDriverService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,6 +19,11 @@ public class InternalController {
     @GetMapping("/checkStatus/{id}")
     public String checkDriverStatus(@PathVariable Long id){
         return internalDriverService.checkDriverStatus(id);
+    }
+
+    @GetMapping("/checkStatus/all")
+    public Map<Long, String> checkAllDriverStatus(List<Long> ids){
+        return internalDriverService.checkAllDriverStatus(ids);
     }
 
     //UpdateDriverStatus

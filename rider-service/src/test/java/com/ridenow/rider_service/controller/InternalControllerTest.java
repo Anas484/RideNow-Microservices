@@ -1,10 +1,7 @@
 package com.ridenow.rider_service.controller;
 
-import com.ridenow.rider_service.service.DriverService;
 import com.ridenow.rider_service.service.InternalDriverService;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class InternalControllerTest {
 
@@ -12,7 +9,7 @@ class InternalControllerTest {
 
     @Test
     void checkDriverStatus() {
-        internalDriverService.checkDriverStatus(1L);
+        internalDriverService.checkAllDriverStatus(1L);
     }
 
     @Test
